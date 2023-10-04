@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -6,13 +5,12 @@ import java.util.Scanner;
 public class BattleShip {
     private static char[][] map = new char[8][8];
     private static int shipsDead = 0;
-
     private static char emptyPointSign = '*';
     private static char shipSign = '-';
     private static char shootedPointSign = '#';
     private static char deadShipsPartSign = '+';
     private static char deadShipSign = 'X';
-    private static boolean mapIsVisible = false;
+    private static boolean mapIsVisible = true;
 
     public static void main(String[] args) {
 
@@ -40,64 +38,49 @@ public class BattleShip {
     }
 
     private static void placeTheShips() {
-        Random random = new Random();
         int placedShips = 0;
         while (placedShips < 6)
         {
             while (placedShips < 1)
             {
-                int randomXPosition = random.nextInt(8);
-                int randomYPosition = random.nextInt(8);
-                int isHorizontal = random.nextInt(2);
-                if (map[randomXPosition][randomYPosition] == emptyPointSign && checkPlaceAround(randomXPosition, randomYPosition, 3, isHorizontal))
-                {
-                    if (isHorizontal == 1)
-                    {
-                        map[randomXPosition][randomYPosition] = shipSign;
-                        map[randomXPosition][randomYPosition+1] = shipSign;
-                        map[randomXPosition][randomYPosition+2] = shipSign;
-                    }
-                    else
-                    {
-                        map[randomXPosition][randomYPosition] = shipSign;
-                        map[randomXPosition+1][randomYPosition] = shipSign;
-                        map[randomXPosition+2][randomYPosition] = shipSign;
-                    }
-                    placedShips++;
-                }
+                placedShips = placeShip(3, placedShips, 3);
             }
 
             while (placedShips < 3)
             {
-                int randomXPosition = random.nextInt(8);
-                int randomYPosition = random.nextInt(8);
-                int isHorizontal = random.nextInt(2);
-                if (map[randomXPosition][randomYPosition] == emptyPointSign && checkPlaceAround(randomXPosition, randomYPosition, 2, isHorizontal))
-                {
-                    if (isHorizontal == 1)
-                    {
-                        map[randomXPosition][randomYPosition] = shipSign;
-                        map[randomXPosition][randomYPosition+1] = shipSign;
-                    }
-                    else
-                    {
-                        map[randomXPosition][randomYPosition] = shipSign;
-                        map[randomXPosition+1][randomYPosition] = shipSign;
-                    }
-                    placedShips++;
-                }
+                placedShips = placeShip(2, placedShips, 2);
             }
 
             while (placedShips < 6) {
-                int randomXPosition = random.nextInt(8);
-                int randomYPosition = random.nextInt(8);
-                int isHorizontal = random.nextInt(2);
-                if (map[randomXPosition][randomYPosition] == emptyPointSign && checkPlaceAround(randomXPosition, randomYPosition, 1, isHorizontal)) {
-                    map[randomXPosition][randomYPosition] = shipSign;
-                    placedShips++;
-                }
+                placedShips = placeShip(1, placedShips, 1);
             }
         }
+    }
+
+    private static int placeShip(int count, int placedShips, int shipSize)
+    {
+        Random random = new Random();
+        int innerPlacedShips = placedShips;
+        int randomXPosition = random.nextInt(8);
+        int randomYPosition = random.nextInt(8);
+        int isHorizontal = random.nextInt(2);
+        if (map[randomXPosition][randomYPosition] == emptyPointSign && checkPlaceAround(randomXPosition, randomYPosition, shipSize, isHorizontal)) {
+            for (int i = 0; i < count; i++)
+            {
+                int innderRandomXPosition = randomXPosition;
+                int innderRandomYPosition = randomYPosition;
+                if (isHorizontal == 1)
+                {
+                    innderRandomYPosition += i;
+                }else if (isHorizontal == 0)
+                {
+                    innderRandomXPosition += i;
+                }
+                map[innderRandomXPosition][innderRandomYPosition] = shipSign;
+            }
+            innerPlacedShips++;
+        }
+        return innerPlacedShips;
     }
 
     private static void showTheMap() {
@@ -121,7 +104,7 @@ public class BattleShip {
         if (map[y - 1][x - 1] == shipSign) {
             map[y - 1][x - 1] = deadShipsPartSign;
 
-            getDeadShipPosition2(y-1, x-1);
+            checkDestroyedShip(y-1, x-1);
 
             shipsDead++;
         } else if (map[y - 1][x - 1] != emptyPointSign) {
@@ -181,29 +164,7 @@ public class BattleShip {
         return true;
     }
 
-    private static boolean pointIsDead (int x, int y)
-    {
-        if (x > 7 || y > 7 || x < 0 || y < 0) {
-            return true;
-        }
-        if (map[x][y] == deadShipsPartSign){
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean pointIsAlive(int x, int y)
-    {
-        if (x > 7 || y > 7 || x < 0 || y < 0) {
-            return true;
-        }
-        if (map[x][y] == shipSign) {
-            return true;
-        }
-        return  false;
-    }
-
-    private static ArrayList<int[]> nextPointsAreDead3 (int x, int y, boolean isHorizontal)
+    private static ArrayList<int[]> nextPointsAreDead (int x, int y, boolean isHorizontal)
     {
         ArrayList<int[]> deadShipsPositions = new ArrayList<>();
         ArrayList<int[]> emptyArrayList = new ArrayList<>();
@@ -306,7 +267,7 @@ public class BattleShip {
 
     }
 
-    private static void getDeadShipPosition2 (int x, int y)
+    private static void checkDestroyedShip (int x, int y)
     {
         ArrayList<int[]> deadShipPositions = new ArrayList<>();
 
@@ -324,7 +285,7 @@ public class BattleShip {
 
         boolean isHorizontal = isShipHorizontal(x, y);
 
-        deadShipPositions = nextPointsAreDead3(x, y, isHorizontal);
+        deadShipPositions = nextPointsAreDead(x, y, isHorizontal);
 
         markDeadShipPositions(deadShipPositions);
     }
