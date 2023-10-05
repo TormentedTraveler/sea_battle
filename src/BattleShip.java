@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.SimpleTimeZone;
 
 public class BattleShip {
     private static char[][] map = new char[8][8];
@@ -11,22 +12,38 @@ public class BattleShip {
     private static char deadShipsPartSign = '+';
     private static char deadShipSign = 'X';
     private static boolean mapIsVisible = true;
+    private static String currentStatus =  "S B";
 
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
-        fillTheMap();
-        placeTheShips();
+        startTheGame();
         while (true) {
             showTheMap();
             int x = scanner.nextInt();
             int y = scanner.nextInt();
+            if (x == 101 || y == 101) {
+                restartTheGame();
+                continue;
+            }
             shootOnPoint(x, y);
             if (shipsDead == 10) {
+                showTheMap();
                 break;
             }
         }
         System.out.println("You destroyed all the ships!!!");
+    }
+
+    private static void startTheGame() {
+        fillTheMap();
+        placeTheShips();
+    }
+
+    public static void restartTheGame () {
+        startTheGame();
+        System.out.println("The game has restarted");
+        shipsDead = 0;
     }
 
     private static void fillTheMap() {
@@ -72,7 +89,7 @@ public class BattleShip {
                 if (isHorizontal == 1)
                 {
                     innderRandomYPosition += i;
-                }else if (isHorizontal == 0)
+                } else if (isHorizontal == 0)
                 {
                     innderRandomXPosition += i;
                 }
@@ -98,6 +115,8 @@ public class BattleShip {
             }
             System.out.println();
         }
+        System.out.print("           " + currentStatus);
+        System.out.println();
     }
 
     public static void shootOnPoint(int x, int y) {
@@ -107,10 +126,12 @@ public class BattleShip {
             checkDestroyedShip(y-1, x-1);
 
             shipsDead++;
+            currentStatus = "HIT";
         } else if (map[y - 1][x - 1] != emptyPointSign) {
             System.out.println("This point is already destroyed");
         } else {
             map[y - 1][x - 1] = shootedPointSign;
+            currentStatus = "MISS";
         }
     }
 
@@ -125,12 +146,7 @@ public class BattleShip {
                         return false;
                     }
 
-                    if (x + j < 0 || y + i < 0)
-                    {
-                        continue;
-                    }
-
-                    if (x + j > 7 || y + i > 7)
+                    if (x + j < 0 || y + i < 0 || x + j > 7 || y + i > 7)
                     {
                         continue;
                     }
@@ -145,12 +161,7 @@ public class BattleShip {
                         return false;
                     }
 
-                    if (x + i < 0 || y + j < 0)
-                    {
-                        continue;
-                    }
-
-                    if (x + i > 7 || y + j > 7)
+                    if (x + i < 0 || y + j < 0 || x + i > 7 || y + j > 7)
                     {
                         continue;
                     }
@@ -164,95 +175,64 @@ public class BattleShip {
         return true;
     }
 
-    private static ArrayList<int[]> nextPointsAreDead (int x, int y, boolean isHorizontal)
-    {
+    private static ArrayList<int[]> nextPointsAreDead (int x, int y, boolean isHorizontal) {
         ArrayList<int[]> deadShipsPositions = new ArrayList<>();
         ArrayList<int[]> emptyArrayList = new ArrayList<>();
-
         int maximumShipLength = 3;
-        for (int i = -2; i < maximumShipLength; i ++)
-        {
-            if (isHorizontal)
-            {
-//                System.out.println("horizontal run");
-                if ((y + i  < 0 && i == -2) || (y + i > 7 && i == 2) || (y + i < 0 && i == -1) || (y + i > 7 && i == 1))
-                {
-//                    System.out.println("continue on first" + i);
-                    continue;
-                }
 
-                if (pointIsShip(x, y+i) && !pointIsShip(x,y+i+1) && i == -2)
-                {
-//                    System.out.println("continue first elements");
-                    continue;
-                }
-                else if (pointIsShip(x, y+i) && !pointIsShip(x,y+1) && i == 2)
-                {
-//                    System.out.println("break on last elements");
-                    break;
-                }
+        for (int i = -2; i < maximumShipLength; i ++) {
+            int innerCommon = x + i;
+            int innerX = x + i;
+            int innerY = y;
+            int innerPreviousXPoint = innerX + 1;
+            int innerPreviousYPoint = y;
 
-                if (!pointIsShip(x,y+i))
-                {
-//                    System.out.println("continue on non-ship");
-                    continue;
-                }
-
-                if (map[x][y+i] == deadShipsPartSign)
-                {
-//                    System.out.println("adding points");
-                    int[] positions = new int[2];
-                    positions[0] = x;
-                    positions[1] = y+i;
-                    deadShipsPositions.add(positions);
-                }
-                else if (map[x][y+i] == shipSign)
-                {
-//                    System.out.println("return on non-dead");
-                    return emptyArrayList;
-                }
+            if (isHorizontal) {
+                innerX = x;
+                innerY = y + i;
+                innerCommon = y + i;
+                innerPreviousXPoint = x;
+                innerPreviousYPoint = innerY + 1;
             }
-            else
+
+            if ((innerCommon  < 0 && i == -2) || (innerCommon > 7 && i == 2) || (innerCommon < 0 && i == -1) || (innerCommon > 7 && i == 1))
             {
-//                System.out.println("vertical run");
-                if ((x + i  < 0 && i == -2) || (x + i > 7 && i == 2) || (x + i < 0 && i == -1) || (x + i > 7 && i == 1))
-                {
 //                    System.out.println("continue on first" + i);
-                    continue;
-                }
+                continue;
+            }
 
-                if (pointIsShip(x+i, y) && !pointIsShip(x+i+1,y) && i == -2)
-                {
+            if (pointIsShip(innerX, innerY) && !pointIsShip(innerPreviousXPoint, innerPreviousYPoint) && i == -2)
+            {
 //                    System.out.println("continue first elements");
-                    continue;
-                }
-                else if (pointIsShip(x+i, y) && !pointIsShip(x+1,y) && i == 2)
-                {
+                continue;
+            }
+            else if (pointIsShip(innerX, innerY) && !pointIsShip(innerPreviousXPoint,innerPreviousYPoint) && i == 2)
+            {
 //                    System.out.println("break on last elements");
-                    break;
-                }
+                break;
+            }
 
-                if (!pointIsShip(x+i,y))
-                {
+            if (!pointIsShip(innerX,innerY))
+            {
 //                    System.out.println("continue on non-ship");
-                    continue;
-                }
+                continue;
+            }
 
-                if (map[x+i][y] == deadShipsPartSign)
-                {
+            if (map[innerX][innerY] == deadShipsPartSign)
+            {
 //                    System.out.println("adding points");
-                    int[] positions = new int[2];
-                    positions[0] = x+i;
-                    positions[1] = y;
-                    deadShipsPositions.add(positions);
-                }
-                else if (map[x+i][y] == shipSign)
-                {
+                int[] positions = new int[2];
+                positions[0] = innerX;
+                positions[1] = innerY;
+                deadShipsPositions.add(positions);
+            }
+            else if (map[innerX][innerY] == shipSign)
+            {
 //                    System.out.println("return on non-dead");
-                    return emptyArrayList;
-                }
+                return emptyArrayList;
             }
         }
+
         return deadShipsPositions;
     }
 
@@ -278,7 +258,6 @@ public class BattleShip {
             positions[1] = y;
             deadShipPositions.add(positions);
 
-//            System.out.println("It's a single ship");
             markDeadShipPositions(deadShipPositions);
             return;
         }
@@ -301,18 +280,34 @@ public class BattleShip {
 
     private static boolean checkOnSingleShip (int x, int y)
     {
-        for (int i = -1; i < 2; i+=2)
-        {
-            if (y - 1 < 0 || y + 1 > 7 || x + i < 0 || x + i > 7)
-            {
-                continue;
+        if (pointIsShip(x, y)) {
+            boolean horizontal = true;
+            boolean vertical = true;
+
+            for (int i = -1; i < 2; i+=2) {
+                if (y + i < 0 || y + i > 7) {
+                    continue;
+                }
+                if (pointIsShip(x, y + i)) {
+                    horizontal = false;
+                }
             }
-            if ((map[x][y + i] == shootedPointSign && map[x][y + i] == emptyPointSign) && (map[x + i][y] == shootedPointSign && map[x + i][y] == emptyPointSign)) {
-                return true;
+
+            for (int i = -1; i < 2; i+=2) {
+                if (x + i < 0 || x + i > 7) {
+                    continue;
+                }
+                if (pointIsShip(x + i, y)) {
+                    vertical = false;
+                }
             }
+
+            return (horizontal && vertical);
         }
         return false;
     }
+
+
 
     private static boolean isShipHorizontal(int x, int y) {
         if ((x > 0 && pointIsShip(x - 1, y)) || (x < 7 && pointIsShip(x + 1, y))) {
@@ -329,4 +324,3 @@ public class BattleShip {
         return true;
     }
 }
-
